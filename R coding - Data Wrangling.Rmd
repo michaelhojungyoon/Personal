@@ -1,0 +1,155 @@
+---
+title: "R Coding - Data Wrangling"
+author: "Michael Y"
+date: "Jan 17, 2023"
+output: github_document
+---
+
+## Columns
+```{r}
+#Vector change
+library(dplyr)
+dataframe$colname <- as.numeric(as.character(dataframe$colname))
+dataframe$colname <- factor(dataframe$colname, levels = c("alpha", "beta"))
+
+#Pulling from data subset
+library(dplyr)
+dataframe2 <- dataframe %>% select ("colname1", "colname2")
+
+#Removing columns
+dataframe <- dataframe[,-c(#,#)]
+
+#Changing specific column name
+colnames(dataframe)[#] <- c("newtitle")
+
+#Assigning list of colnames
+colnames(dataframe) <- c("1", "2", "3")
+
+#Adding column numeric values
+library(dplyr)
+dataframe2 <- rowSums(dataframe1[, #:#])
+
+#summary of sum of each and every column in dataset; exclude first column
+colSums(dataframe[, -1])
+
+#multiple range of columns by a numbers
+data <- data[ , c(#:#)]*100
+
+#combine text between columns fast
+dataframe$column <- paste(dataframe$1, dataframe$2)
+
+#changing colnames in R
+https://statisticsglobe.com/rename-column-name-in-r-data-frame/
+
+#delete specific term from column
+library(stringr)
+str_replace(dataframe$col1, "NA", "")
+
+#add term to all terms e.g. parenthesis
+dataframe$col1 <- paste0("(", dataframe$col1, ")")
+
+#remove terms in column enclosed by parenthesis
+dataframe$col1 <- stringr::str_replace(dataframe$col1, "\\s*\\([<INSERT TERM HERE>^\\)]+\\)", "")
+
+#split/separate column based on character
+cbind(dataframe, str_split(dataset$column, "\\.", n = #))
+```
+
+## Rows
+```{r}
+#remove duplicate rows
+unique(dataset)
+
+#remove rows with specific value
+dataframe2 <- dataframe[dataframe$Total_reads != 0, ]
+
+#remove rows with NA all
+data[rowSums(is.na(data)) != ncol(data),]
+
+#subset range of rows
+my_data %>% slice(1:3)
+
+#aggregate dupe rows
+dataframe <- aggregate(x2 ~ x1, data, sum)
+
+#group dataframe and sum all columns
+dataframe %>%
+  group_by(colname) %>%
+  summarise_all(funs(sum))
+
+#delete rows/remove rows with certain values
+dataframe2 <- dataframe[!(dataframe$Name=="x" | dataframe$Name2="y"),]
+
+#subset row from dataframe with certain values
+dataframe <- dataframe[dataframe$column == "term or #", ]
+
+#subset/extract rows with specific value in a single column using filter
+dataset <- dataset %>% filter(colname == "value")
+
+#make new column using row names
+dataset$newID <- rownames(dataset)
+```
+
+## Dataframe
+```{r}
+#Assign score to character values in dataframe
+dataframe$column[which(dataframe$column == "AA")] <- 3
+
+#Replace values based on operator condition
+dataframe$col1[which(dataframe$col1 >= 10)] <- c("High")
+
+#gsub() remove of n characters from beginning or ending of string
+dataframe$colname1 <- gsub("^.{0,3}", "", dataframe$colname1) #start
+dataframe$colname1 <- gsub(".{0,3}$", "", dataframe$colname1) #end
+
+#paste0 add character to beginning and ending
+string <- paste0("string", dataframe)
+string <- paste0(dataframe,"string")
+
+#gsub() removal of numbers
+gsub("[0-9]+", "", dataframe)
+
+#convert string variables for formula
+formula <- reformulate/as.formula(string)
+
+#merge(dataframe1, dataframe2, by = "colname", all.x = FALSE/TRUE, all.y = TRUE/FALSE)
+all.x/y is to keep original data row and add NA values as placeholders
+
+#Convert column to row (transpose)
+dataframe <- t(dataframe)
+
+#order dataframe based on inc/dec values of a columns
+dataframe <- dataframe[order(dataframe$column, decreasing = TRUE/FALSE), ]
+```
+
+## Markdown/Knit
+```{r}
+#Create bullet point list
+* Fruits
+    * apples
+    * bananas
+    * grapes
+* Vegetables
+    + carrots
+    + broccoli
+
+scary
+
+1. ocelots
+1. bears
+1. tigers
+
+Not scary
+
+1. elephants
+2. monkeys
+3. rabbits
+```
+
+## Other useful links
+```{r}
+https://www.journaldev.com/43690/sub-and-gsub-function-r
+https://www.datanovia.com/en/lessons/subset-data-frame-rows-in-r/
+
+```
+
