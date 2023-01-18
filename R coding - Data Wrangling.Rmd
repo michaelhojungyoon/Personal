@@ -120,6 +120,19 @@ dataframe <- t(dataframe)
 
 #order dataframe based on inc/dec values of a columns
 dataframe <- dataframe[order(dataframe$column, decreasing = TRUE/FALSE), ]
+
+#group_by species (x3) and calc avg with the number of rows belonging to each species
+iris %>% 
+    group_by(Species) %>% 
+    summarize(average_sepal_length = mean(Sepal.Length), n = n()) %>% 
+    head()
+
+#pivot_longer, colnames are moved to new names_to column and value associated with each colname title is recorded in new values_to column, creates many rows
+dataframe <- pivot_longer(dataframe, 
+                          cols = 2:ncol(old_dataframe),
+                          values_to = "Expression",
+                          names_to = "sample")
+dataframe
 ```
 
 ## Markdown/Knit
