@@ -133,6 +133,10 @@ dataframe <- pivot_longer(dataframe,
                           values_to = "Expression",
                           names_to = "sample")
 dataframe
+
+#identical command to see if two strings are the same
+identical(exprs(eset) %>% colnames(), 
+          pData(eset)$sample_id)
 ```
 
 ## Markdown/Knit
