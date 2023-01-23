@@ -1,0 +1,125 @@
+---
+title: "Statistics"
+author: "Michael Yoon"
+date: "Jan 21, 2023"
+output: github_document
+---
+
+## Basics
+
+#### Comparison between population and sample mean
+```{r}
+#Get data
+library(downloader)
+url <- "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/femaleControlsPopulation.csv"
+filename <- "femaleControlsPopulation.csv"
+if (!file.exists(filename)) download(url,destfile=filename)
+population <- read.csv(filename)
+population <- unlist(population) # turn it into a numeric
+
+#Get samples of size n
+n <- 10000
+null <- vector("numeric",n)
+for (i in 1:n) {
+  control <- sample(population,12)
+  treatment <- sample(population,12)
+  null[i] <- mean(treatment) - mean(control)
+}
+
+obsdiff <- mean(treatment) - mean(control)
+mean(null >= obsdiff)
+```
+
+#### Confidence interval and error
+
+Adapted from: https://www.huber.embl.de/msmb/06-chap.html#sec-cointossing
+
+Highlighted graph shows rejection region indicating range of values to reject the null hypothesis. If the bias concentrates towards both tails or one it is either a two-sided or one-sided test, respectively. 
+
+For error, we have 4 options:
+1) Reject null hypothesis: Null hypothesis is true = Type 1 error (FP), Null hypothesis is false = True positive
+2) Do not reject null hypothesis: Null hypothesis is true = True negative, Null hypothesis is false = Type 2 error (FN)
+Decreasing the false positive rate will make he data more conservative, but we increase the false negative rate and vice-versa. FPR is the same as alpha. 1 - alpha = specifity of test and 1 - Beta (power) = sensitivity or true positive rate of test.
+
+```{r}
+library(tidyverse)
+set.seed(0xdada)
+numFlips = 100
+probHead = 0.6
+coinFlips = sample(c("H", "T"), size = numFlips,
+  replace = TRUE, prob = c(probHead, 1 - probHead))
+head(coinFlips)
+k = 0:numFlips
+numHeads = sum(coinFlips == "H")
+binomDensity = tibble(k = k,
+     p = dbinom(k, size = numFlips, prob = 0.5))
+
+#Plot simulations of coin toss
+numSimulations = 10000
+outcome = replicate(numSimulations, {
+  coinFlips = sample(c("H", "T"), size = numFlips,
+                     replace = TRUE, prob = c(0.5, 0.5))
+  sum(coinFlips == "H")
+})
+ggplot(tibble(outcome)) + xlim(-0.5, 100.5) +
+  geom_histogram(aes(x = outcome), binwidth = 1, center = 50) +
+  geom_vline(xintercept = numHeads, col = "blue")
+
+#Comamand to do flips
+binom.test(x = numHeads, n = numFlips, p = 0.5)
+
+#Plot coin simulation with false positive rate = 0.05
+alpha = 0.05
+binomDensity = arrange(binomDensity, p) |>
+        mutate(reject = (cumsum(p) <= alpha))
+
+ggplot(binomDensity) +
+  geom_bar(aes(x = k, y = p, col = reject), stat = "identity") +
+  scale_colour_manual(
+    values = c(`TRUE` = "red", `FALSE` = "darkgrey")) +
+  geom_vline(xintercept = numHeads, col = "blue") +
+  theme(legend.position = "none")
+```
+
+
+## Normal (Gaussian) Distribution
+
+Mathemathical function is stored as pnorm function in R. Normal distributions follow an empirical rule where one std dev away from mean = 68% of observations, two std dev away from mean = 95% of observations, and three std dev away from mean = 99.7% of observations. 
+
+## Probability Desnity Function
+
+Representation of probability vs x-values where the chance of getting a range of values can be found by integrating under the distribution curve.
+
+## T test
+
+The t-test determines whether there is a difference between means of two groups following a t-distribution with n1 + n2 - 2 degrees of freedom. Assumes the data is independent and comes from a normal distribution with same standard deviation. Comes in many variations where it could be sided (reject the null if the value is too large or small), two-sampled meaning that the groups where compared against each other and not another fixed value, and unpaired meaning there was no 1:1 mapping between the values of the two groups (paired = before and after timepoints). Same standard deviation (same variance) is also assumed.
+
+Sample size n higher gives more significant results. Independence means that measurements must not be connected (duplicates/replicates)
+
+```{r}
+library("ggbeeswarm")
+data("PlantGrowth")
+ggplot(PlantGrowth, aes(y = weight, x = group, col = group)) +
+  geom_beeswarm() + theme(legend.position = "none")
+tt = with(PlantGrowth,
+          t.test(weight[group =="ctrl"],
+                 weight[group =="trt2"],
+                 var.equal = TRUE))
+tt
+
+#Independence test
+with(rbind(PlantGrowth, PlantGrowth),
+       t.test(weight[group == "ctrl"],
+              weight[group == "trt2"],
+              var.equal = TRUE))
+```
+
+
+
+## Definitions
+
+Variable - unknown quantity to be studied
+Random Variable - variable where value results from a quantitative measurement that is subject to variation
+Probability - number assigned to an outcome to express chance of occurrence
+Probability distribution - mathematical function that shows outcomes/events to probabilities
+False positive rate (alpha) - total probability that test stat will fall into this rejection region even if null hypothesis is true
