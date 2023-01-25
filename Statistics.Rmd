@@ -81,7 +81,6 @@ ggplot(binomDensity) +
   theme(legend.position = "none")
 ```
 
-
 ## Normal (Gaussian) Distribution
 
 Mathemathical function is stored as pnorm function in R. Normal distributions follow an empirical rule where one std dev away from mean = 68% of observations, two std dev away from mean = 95% of observations, and three std dev away from mean = 99.7% of observations. 
@@ -114,6 +113,138 @@ with(rbind(PlantGrowth, PlantGrowth),
               var.equal = TRUE))
 ```
 
+## Principal Coordinate Analysis
+
+Purpose: To observe major sources of variation from variables, visualize trends or patterns in the form of clustering, and to see if those variations are associated with a biological condition.
+
+Results: We see that from plotIndiv that gene expression is altered and clustered in response to different dosage levels of drug (50/150), but in addition, we can see that time of exposure also plays a role.
+
+```{r}
+library(mixOmics)
+data(liver.toxicity)
+X <- liver.toxicity$gene
+
+#Default parameters (center = TRUE so mean = 0, ncomp = 2 so first two PCA values capturing highest var, scale = FALSE so data is not scaled)
+MyResult.pca <- pca(X)     # 1 Run the method
+plotIndiv(MyResult.pca, ind.names = FALSE,
+          group = liver.toxicity$treatment$Dose.Group,
+          pch = as.factor(liver.toxicity$treatment$Time.Group),
+          legend = TRUE, title = 'Liver toxicity: genes, PCA comp 1 - 2',
+          legend.title = 'Dose', legend.title.pch = 'Exposure')    # 2 Plot the samples
+
+plot(MyResult.pca)
+MyResult.pca
+
+#Show top 100 genes and their name
+plotLoadings(MyResult.pca, ndisplay = 100, 
+             name.var = liver.toxicity$gene.ID[, "geneBank"],
+             size.name = rel(0.3))
+
+#Show variables contributing to PC1/2/3 by top 15/10/5 genes from each PC
+MyResult.spca <- spca(X, ncomp = 3, keepX = c(15,10,5))                 # 1 Run the method
+plotIndiv(MyResult.spca, group = liver.toxicity$treatment$Dose.Group,   # 2 Plot the samples
+          pch = as.factor(liver.toxicity$treatment$Time.Group),
+          legend = TRUE, title = 'Liver toxicity: genes, sPCA comp 1 - 2',
+          legend.title = 'Dose', legend.title.pch = 'Exposure')
+plotVar(MyResult.spca, cex = 1)                                        # 3 Plot the variables, cex reduces size of labels
+
+#Check weights used to define component
+selectVar(MyResult.spca, comp = 1)$value
+plotLoadings(MyResult.spca)
+selectVar(MyResult.spca, comp=2)$value
+plotLoadings(MyResult.spca, comp = 2)
+```
+
+## Partial Least Squares - Discriminant Analysis (PLS-DA) <supervised>
+
+Purpose: To classify samples into known groups and predict classes of new samples. Identifying key variables that drive discrimination. Unlike PCA, the aim to to maximize covariance between x and y. 
+
+```{r}
+library(mixOmics)
+data(srbct)
+X <- srbct$gene
+Y <- srbct$class 
+summary(Y)
+
+#Select 50 of each component for testing purposes
+MyResult.splsda <- splsda(X, Y, keepX = c(50,50)) # 1 Run the method
+plotIndiv(MyResult.splsda)                          # 2 Plot the samples
+plotVar(MyResult.splsda)                            # 3 Plot the variables
+selectVar(MyResult.splsda, comp=1)$name             # Selected variables on component 1
+
+#Replace with icons
+plotIndiv(MyResult.splsda, ind.names = FALSE, legend=TRUE,
+          ellipse = TRUE, star = TRUE, title = 'sPLS-DA on SRBCT',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+
+#Add background gradient
+background <- background.predict(MyResult.splsda, comp.predicted=2,
+                                dist = "max.dist") 
+plotIndiv(MyResult.splsda, comp = 1:2, group = srbct$class,
+          ind.names = FALSE, title = "Maximum distance",
+          legend = TRUE,  background = background)
+
+#Contribution to component
+MyResult.splsda2 <- splsda(X,Y, ncomp=3, keepX=c(15,10,5))
+selectVar(MyResult.splsda2, comp=1)$value
+plotLoadings(MyResult.splsda2, contrib = 'max', method = 'mean')
+```
+
+## Data Integration Analysis for Biomarker discovery using a Latent Components (DIABLO)
+
+Purpose: Extension of Generalized Canonical Correlation Analysis. Identifies variables across related datasets to explain outcome of interest. Main outputs include:
+1) Set of components - latent variables associated with each dataset
+2) Set of loading vectors - coefficients assigned to each variable to define each component. Values indicate importance of each variable. Maximization of covariance between x and y.
+3) List of selected variables - list of variables associated with component with sparse DIABLO
+
+```{r}
+#Load data
+library(mixOmics)
+data(breast.TCGA)
+# extract training data and name each data frame
+X <- list(mRNA = breast.TCGA$data.train$mrna, 
+          miRNA = breast.TCGA$data.train$mirna, 
+          protein = breast.TCGA$data.train$protein)
+Y <- breast.TCGA$data.train$subtype
+summary(Y)
+
+#Select number of variables to keep in each dataset and each component
+list.keepX <- list(mRNA = c(16, 17), miRNA = c(18,5), protein = c(5, 5))
+
+#Generate splsda for each dataset (default: ncomp = 2, scale = TRUE meaning var = 1)
+MyResult.diablo <- block.splsda(X, Y, keepX=list.keepX)
+plotIndiv(MyResult.diablo)
+plotVar(MyResult.diablo)
+
+#Non sparse version
+MyResult.diablo2 <- block.plsda(X, Y)
+
+#Plot BRCA for each sub dataset
+plotIndiv(MyResult.diablo, 
+          ind.names = FALSE, 
+          legend=TRUE, cex=c(1,2,3),
+          title = 'BRCA with DIABLO')
+
+plotVar(MyResult.diablo, var.names = c(FALSE, FALSE, TRUE),
+        legend=TRUE, pch=c(16,16,1))
+
+#Show correlation between datasets
+plotDiablo(MyResult.diablo, ncomp = 1)
+
+#Show correlation between proteome, transcriptome of each dataset
+circosPlot(MyResult.diablo, cutoff=0.7)
+
+#Show loading weights of each selected variable on each component and dataset
+#plotLoadings(MyResult.diablo, contrib = "max")
+plotLoadings(MyResult.diablo, comp = 2, contrib = "max")
+
+#Use cross-validation with perf to check prediction of model
+set.seed(123) # for reproducibility in this vignette
+MyPerf.diablo <- perf(MyResult.diablo, validation = 'Mfold', folds = 5, 
+                   nrepeat = 10, 
+                   dist = 'centroids.dist')
+```
+
 
 
 ## Definitions
@@ -123,3 +254,7 @@ Random Variable - variable where value results from a quantitative measurement t
 Probability - number assigned to an outcome to express chance of occurrence
 Probability distribution - mathematical function that shows outcomes/events to probabilities
 False positive rate (alpha) - total probability that test stat will fall into this rejection region even if null hypothesis is true
+
+## Links
+https://www.bioconductor.org/packages/devel/bioc/vignettes/mixOmics/inst/doc/vignette.html#diablo
+
