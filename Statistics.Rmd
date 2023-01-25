@@ -94,7 +94,7 @@ Representation of probability vs x-values where the chance of getting a range of
 
 The t-test determines whether there is a difference between means of two groups following a t-distribution with n1 + n2 - 2 degrees of freedom. Assumes the data is independent and comes from a normal distribution with same standard deviation. Comes in many variations where it could be sided (reject the null if the value is too large or small), two-sampled meaning that the groups where compared against each other and not another fixed value, and unpaired meaning there was no 1:1 mapping between the values of the two groups (paired = before and after timepoints). Same standard deviation (same variance) is also assumed.
 
-Sample size n higher gives more significant results. Independence means that measurements must not be connected (duplicates/replicates)
+Sample size n higher gives more significant results. Independence means that measurements must not be connected (duplicates/replicates).
 
 ```{r}
 library("ggbeeswarm")
