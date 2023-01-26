@@ -91,9 +91,13 @@ Representation of probability vs x-values where the chance of getting a range of
 
 ## T test
 
-The t-test determines whether there is a difference between means of two groups following a t-distribution with n1 + n2 - 2 degrees of freedom. Assumes the data is independent and comes from a normal distribution with same standard deviation. Comes in many variations where it could be sided (reject the null if the value is too large or small), two-sampled meaning that the groups where compared against each other and not another fixed value, and unpaired meaning there was no 1:1 mapping between the values of the two groups (paired = before and after timepoints). Same standard deviation (same variance) is also assumed.
+The t-test determines whether there is a difference between means of two groups following a t-distribution with n1 + n2 - 2 degrees of freedom. 
 
-Sample size n higher gives more significant results. Independence means that measurements must not be connected (duplicates/replicates).
+Assumes the data is independent, comes from a normal distribution, with both sets having similar variance. Comes in many variations where it could be sided (reject the null if the value is too large or small), two-sampled meaning that the groups where compared against each other and not another fixed value, and unpaired meaning there was no 1:1 mapping between the values of the two groups (paired = before and after timepoints).
+
+Resulting t-values show how many standard deviations apart the difference is. The value is a random variable by the random sample which follows a t-distribution (assuming data is normal) which is only dependent on the degrees of freedom calculate by n subtract 1/2 based on one-side or two-side. Because it follows this probability distribution, we can calculate the p-value of seeing the test statistic (t-value) = probability of seeing a value higher or lower than the positive/negative of the t-value.
+
+Sample size n (20-30) higher gives more significant results. Even if the original distribution is not normal, due to CLT it will become normal. Independence means that measurements must not be connected (duplicates/replicates).
 
 ```{r}
 library("ggbeeswarm")
@@ -254,6 +258,7 @@ Random Variable - variable where value results from a quantitative measurement t
 Probability - number assigned to an outcome to express chance of occurrence
 Probability distribution - mathematical function that shows outcomes/events to probabilities
 False positive rate (alpha) - total probability that test stat will fall into this rejection region even if null hypothesis is true
+Degrees of freedom - number of independent values that can vary in an analysis, but the last number is concrete. E.g. if we had three unknown numbers to make an average of 5, two of those numbers can be anything, but the last one is constrained. For a two-sided test, it would be n1 + n2 - 2 (total samples for each, minus one constraint for each)
 
 ## Links
 https://www.bioconductor.org/packages/devel/bioc/vignettes/mixOmics/inst/doc/vignette.html#diablo
