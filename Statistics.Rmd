@@ -130,7 +130,53 @@ mouse.data
 mouse.regresison <- lm(size ~ weight, data = mouse.data)
 summary(mouse.regresison)
 ```
+## Multiple Linear Regression
 
+Based on class notes: Linear regression is limited to the difference between two means during two timepoints. Statements to make:
+
+Basic example: 
+
+f1 is control and high temp while f2 is A(controlN), B(midN), C(highN)
+So the output shows
+1) Intercept - plant pred to have length of 0.98 cm under control temp and control nitrogen cond
+2) f1High - plant pred to grow 3 cm under high temp and control nitrogen conditions
+...
+5) f1High:f2B - effect of medium nitrogen in high temp increase by 1 compared to effect of medium nitrogen under control temp
+```{r}
+library(tidyverse)
+# interpreting interaction coefficients from lm first case two categorical
+# variables
+set.seed(12)
+f1 <- gl(n = 2, k = 30, labels = c("Low", "High"))
+f2 <- as.factor(rep(c("A", "B", "C"), times = 20))
+modmat <- model.matrix(~f1 * f2, data.frame(f1 = f1, f2 = f2))
+coeff <- c(1, 3, -2, -4, 1, -1.2)
+y <- rnorm(n = 60, mean = modmat %*% coeff, sd = 0.1)
+dat <- data.frame(y = y, f1 = f1, f2 = f2)
+summary(lm(y ~ f1 * f2))
+
+# second case one categorical and one continuous variable
+x <- runif(50, 0, 10)
+f1 <- gl(n = 2, k = 25, labels = c("Low", "High"))
+modmat <- model.matrix(~x * f1, data.frame(f1 = f1, x = x))
+coeff <- c(1, 3, -2, 1.5)
+y <- rnorm(n = 50, mean = modmat %*% coeff, sd = 0.5)
+dat <- data.frame(y = y, f1 = f1, x = x)
+summary(lm(y ~ x * f1))
+
+# plot (easy one)
+ggplot(dat, aes(x = x, y = y, color = f1)) + geom_point() + geom_abline(xintercept = 1.17, 
+    slope = 2.98, color = "red") + geom_abline(xintercept = 1.17 - 2.09, slope = 2.98 + 
+    1.5, color = "blue") + geom_text(label = "y = 1.17 + 2.98 * x", x = 5, y = 10, 
+    angle = 30, color = "black", size = 8) + geom_text(label = "y = (1.17 - 2.09) + (2.98 + 1.5) * x", 
+    x = 5, y = 25, angle = 45, color = "black", size = 8)
+```
+
+
+
+## ANOVA
+
+Purpose: One-ways are designed to test equality across multiple means while two-ways are designed to test relationship between two independent variables on a dependent variable. Used to measure overall association between response and factor, the weighted average. 
 
 ## Principal Coordinate Analysis
 
@@ -264,8 +310,6 @@ MyPerf.diablo <- perf(MyResult.diablo, validation = 'Mfold', folds = 5,
                    dist = 'centroids.dist')
 ```
 
-
-
 ## Definitions
 
 Variable - unknown quantity to be studied
@@ -274,6 +318,8 @@ Probability - number assigned to an outcome to express chance of occurrence
 Probability distribution - mathematical function that shows outcomes/events to probabilities
 False positive rate (alpha) - total probability that test stat will fall into this rejection region even if null hypothesis is true
 Degrees of freedom - number of independent values that can vary in an analysis, but the last number is concrete. E.g. if we had three unknown numbers to make an average of 5, two of those numbers can be anything, but the last one is constrained. For a two-sided test, it would be n1 + n2 - 2 (total samples for each, minus one constraint for each)
+Simple/Conditional effects - effects at a given level of the other factor (e.g. effect of genotype at E16 timepoint). Cell mean differences between conditions of one level at a specific level of the other factor.
+Marginal/Main effects - overall effect of factor averaged over all levels of the other factor (e.g. overall effect of genotype, averaged across all developmental timepoints E16 and P28). Measures the overall association between response and factor, weighted average over all levels of the other factor.
 
 ## Links
 https://www.bioconductor.org/packages/devel/bioc/vignettes/mixOmics/inst/doc/vignette.html#diablo
